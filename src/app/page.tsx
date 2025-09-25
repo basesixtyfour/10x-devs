@@ -4,7 +4,7 @@ import ResponseField from "@/components/ResponseField";
 
 export default function Home() {
   return (
-    <div className="flex flex-col w-screen px-64 items-center justify-center h-screen gap-4">
+    <div className="dark:bg-[#2d2d30] flex flex-col w-screen px-64 items-center justify-center h-screen gap-4">
       <div className="flex flex-col w-full items-center justify-center gap-4">
         <h1 className="text-2xl font-bold">10x Devs</h1>
         <p className="text-sm text-gray-500">

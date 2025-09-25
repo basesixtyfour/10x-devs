@@ -1,7 +1,11 @@
+import { Card, CardContent } from "@/components/ui/card";
+
 export default function ResponseField() {
   return (
-    <div className="w-1/2 min-w-32 border-2 border-gray-300 rounded-md shrink-0">
-      Hii! I am the response field.
-    </div>
+    <Card className="shrink-0 border-2 border-gray-300 rounded-md">
+      <CardContent>
+        Hii! I am the response field.
+      </CardContent>
+    </Card>
   );
 }
