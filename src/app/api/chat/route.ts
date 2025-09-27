@@ -7,28 +7,24 @@ const openai = new OpenAI({
 });
 
 export async function POST(request: NextRequest) {
-  const message = (await request.json()).message;
+  const { message } = await request.json();
 
   if (!message) {
     return NextResponse.json({ error: "Message is required" }, { status: 400 });
   }
 
-  const response = await openai.chat.completions.create({
+  const responseStream = await openai.chat.completions.create({
     model: "x-ai/grok-4-fast:free",
-    messages: [
-      {
-        "role": "user",
-        "content": [
-          {
-            "type": "text",
-            "text": message
-          }
-        ]
-      }
-    ],
-
+    messages: [{ role: "user", content: message }],
+    stream: true,
   });
 
-  console.log(response.choices[0].message);
-  return NextResponse.json(response);
+  const stream = responseStream.toReadableStream();
+  return new NextResponse(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    },
+  });
 }
