@@ -2,7 +2,7 @@
 
 A modern AI-powered development assistant built with Next.js, featuring real-time streaming responses and a sleek dark theme interface.
 
-## 🚀 Features
+## Features
 
 - **Real-time AI Chat**: Stream responses from AI models using OpenAI-compatible APIs
 - **Modern UI**: Clean, responsive design with dark theme support
@@ -11,7 +11,7 @@ A modern AI-powered development assistant built with Next.js, featuring real-tim
 - **TypeScript**: Full type safety and better development experience
 - **Tailwind CSS**: Utility-first CSS framework for rapid UI development
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Framework**: Next.js 15.5.3 with App Router
 - **Language**: TypeScript
@@ -21,26 +21,30 @@ A modern AI-powered development assistant built with Next.js, featuring real-tim
 - **Markdown**: React Markdown with GFM support
 - **Package Manager**: pnpm
 
-## 📦 Installation
+## Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd 10x-devs
    ```
 
 2. **Install dependencies**
+
    ```bash
    pnpm install
    ```
 
 3. **Set up environment variables**
    Create a `.env.local` file in the root directory:
+
    ```env
    OPENROUTER_API_KEY=your_openrouter_api_key_here
    ```
 
 4. **Run the development server**
+
    ```bash
    pnpm dev
    ```
@@ -48,7 +52,7 @@ A modern AI-powered development assistant built with Next.js, featuring real-tim
 5. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -56,8 +60,8 @@ A modern AI-powered development assistant built with Next.js, featuring real-tim
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📝 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-**Built with ❤️ by 10x Devs**
+**Built with love by 10x Devs**

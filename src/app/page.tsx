@@ -1,12 +1,11 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import ResponseField from "@/components/ResponseField";
+import ChatInput from "@/components/ChatInput";
 import { useState } from "react";
 
 export default function Home() {
-  const handleClick = async () => {
+  const sendMessage = async () => {
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
@@ -35,7 +34,7 @@ export default function Home() {
           try {
             const chunk = JSON.parse(line);
             const content = chunk.choices?.[0]?.delta?.content || "";
-            setResponse(prev => prev + content);
+            setResponse((prev) => prev + content);
           } catch (err) {
             console.error("Failed to parse line:", line);
           }
@@ -46,22 +45,27 @@ export default function Home() {
     }
   };
 
-
   const [response, setResponse] = useState<string>("");
   const [message, setMessage] = useState<string>("");
   return (
-    <div className="dark:bg-[#2d2d30] flex flex-col w-screen px-64 items-center justify-center h-screen gap-4">
-      <div className="flex flex-col gap-4 justify-center items-center w-full">
-        <h1 className="text-2xl font-bold">10x Devs</h1>
-        <p className="text-sm text-gray-500">
-          What would you like to build today?
-        </p>
-      </div>
-      {response && <ResponseField content={response} />}
-      <div className="flex flex-row gap-4 justify-center items-center self-end w-full shrink-0">
-        <Input className="rounded-md border-2 border-gray-300" placeholder="Enter your prompt" value={message} onChange={(e) => setMessage(e.target.value)} />
-        <Button onClick={handleClick}>Send</Button>
-      </div>
-    </div>
+    <>
+      <h1 className="fixed top-0 right-0 left-0 p-5 text-2xl font-bold h-18">
+        10x Devs
+      </h1>
+      {!response && (
+        <div className="flex justify-center items-center h-[calc(100vh-4.5rem)]">
+          <p className="text-4xl">What do you want to build?</p>
+        </div>
+      )}
+      <ResponseField
+        content={response}
+        className="box-border overflow-auto pt-24 pb-24 mx-auto mt-2 w-3/5 h-[calc(100vh-4.5rem)] font-sans leading-7 rounded-md border-none bg-inherit text-inherit"
+      />
+      <ChatInput
+        message={message}
+        setMessage={setMessage}
+        sendMessage={sendMessage}
+      />
+    </>
   );
 }
