@@ -19,17 +19,22 @@ export default function ResponseField({
           remarkPlugins={[remarkGfm]}
           components={{
             code(props) {
-              const { children, className, node, ref, ...rest } = props;
+              const { children, className, ...rest } = props as {
+                children: React.ReactNode;
+                className?: string;
+              } & Record<string, unknown>;
               const match = /language-(\w+)/.exec(className || "");
               return match ? (
-                <SyntaxHighlighter
-                  {...rest}
-                  PreTag="div"
-                  language={match[1]}
-                  style={theme}
-                >
-                  {String(children).replace(/\n$/, "")}
-                </SyntaxHighlighter>
+                <div>
+                  <SyntaxHighlighter
+                    {...rest}
+                    PreTag="div"
+                    language={match[1]}
+                    style={theme}
+                  >
+                    {String(children).replace(/\n$/, "")}
+                  </SyntaxHighlighter>
+                </div>
               ) : (
                 <code {...rest} className={className}>
                   {children}

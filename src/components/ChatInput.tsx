@@ -17,7 +17,7 @@ export default function ChatInput({
 }: ChatInputProps) {
   return (
     <div className="fixed bottom-0 w-full shrink-0 ">
-      <div className="w-2/3 flex gap-4 items-center justify-end rounded-4xl px-3 py-2 mx-auto dark:bg-[#303030] mb-4">
+      <div className="lg:w-2/3 m-5 flex gap-4 items-center justify-end rounded-4xl px-3 py-2 lg:mx-auto dark:bg-[#303030]">
         <Input
           className="text-lg border-none dark:text-lg placeholder:text-gray-500 bg-inherit dark:bg-inherit dark:placeholder:text-grey-400"
           type="text"
@@ -30,7 +30,10 @@ export default function ChatInput({
             }
           }}
         />
-        <Button onClick={sendMessage} className="w-10 h-10 rounded-full">
+        <Button
+          onClick={sendMessage}
+          className="w-10 h-10 rounded-full cursor-pointer hover:dark:bg-[#272727]"
+        >
           <SendHorizontal className="size-4" />
         </Button>
       </div>
