@@ -7,6 +7,12 @@ datasource db {
   url      = env("PRISMA_DATABASE_URL")
 }
 
+enum Role {
+  system
+  user
+  assistant
+}
+
 model User {
   id            String    @id @default(uuid(7))
   email         String    @unique
@@ -38,6 +44,7 @@ model Message {
   chat      Chat     @relation(fields: [chatId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  role      Role     @default(system)
 }
 
 model Session {

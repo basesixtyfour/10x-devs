@@ -1,38 +1,48 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from 'openai';
-import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
-import { ChatMessage } from "@/types";
-
-const openai = new OpenAI({
-  baseURL: "https://openrouter.ai/api/v1",
-  apiKey: process.env.OPENROUTER_API_KEY,
-});
+import { auth } from "@/auth";
+import { headers } from "next/headers";
+import { getChats, createNewChat } from "@/lib/server/chat";
+import { SystemPromptSchema, PaginationSchema } from "@/lib/server/validation";
 
 
-export async function POST(request: NextRequest) {
-  const chatMessages = await request.json() as ChatMessage[]  ;
+export async function GET(request: NextRequest) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
-  if (!chatMessages || chatMessages.length === 0) {
-    return NextResponse.json({ error: "Message is required" }, { status: 400 });
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const messages: ChatCompletionMessageParam[] = chatMessages.map((message) => ({
-    role: message.role,
-    content: message.content,
-  }));
+  const parsed = PaginationSchema.safeParse(Object.fromEntries(request.nextUrl.searchParams.entries()));
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid pagination parameters" }, { status: 400 });
+  }
 
-  const responseStream = await openai.chat.completions.create({
-    model: "x-ai/grok-4-fast:free",
-    messages,
-    stream: true,
+  const { limit, skip } = parsed.data;
+  const userId = session.user.id;
+  
+  const chat = await getChats(userId, { limit, skip });
+  return NextResponse.json(chat);
+}
+
+export async function POST(request: NextRequest) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
   });
 
-  const stream = responseStream.toReadableStream();
-  return new NextResponse(stream, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
-    },
-  });
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const userId = session.user.id;
+  const parsed = SystemPromptSchema.safeParse(await request.json());
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid system prompt" }, { status: 400 });
+  }
+
+  const { systemPrompt } = parsed.data;
+  const chat = await createNewChat(userId, systemPrompt);
+  
+  return NextResponse.json(chat);
 }

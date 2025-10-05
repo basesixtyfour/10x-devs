@@ -37,7 +37,7 @@ importers:
         version: 0.4.6(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       openai:
         specifier: ^5.23.0
-        version: 5.23.0
+        version: 5.23.0(zod@4.1.11)
       react:
         specifier: 19.1.0
         version: 19.1.0
@@ -56,6 +56,9 @@ importers:
       tailwind-merge:
         specifier: ^3.3.1
         version: 3.3.1
+      zod:
+        specifier: ^4.1.11
+        version: 4.1.11
     devDependencies:
       '@eslint/eslintrc':
         specifier: ^3
@@ -4842,7 +4845,9 @@ snapshots:
 
   ohash@2.0.11: {}
 
-  openai@5.23.0: {}
+  openai@5.23.0(zod@4.1.11):
+    optionalDependencies:
+      zod: 4.1.11
 
   optionator@0.9.4:
     dependencies:

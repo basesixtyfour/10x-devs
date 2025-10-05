@@ -30,7 +30,7 @@ export default function Home() {
         message={message}
         setMessage={setMessage}
         sendMessage={() =>
-          sendChatMessage(message, chatMessages, setChatMessages)
+          sendChatMessage(message, chatMessages, setChatMessages, setMessage)
         }
       />
     </>

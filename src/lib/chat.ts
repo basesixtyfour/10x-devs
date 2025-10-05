@@ -3,10 +3,12 @@ import { ChatMessage } from "@/types";
 export async function sendChatMessage(
   message: string,
   chatMessages: ChatMessage[],
-  setChatMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>
+  setChatMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
+  setMessage: React.Dispatch<React.SetStateAction<string>>
 ) {
   if (!message.trim()) return;
 
+  setMessage("");
   const chatId = crypto.randomUUID();
   const newMessages: ChatMessage[] = [
     ...chatMessages,

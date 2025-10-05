@@ -1,0 +1,23 @@
+import { z } from "zod";
+
+export const PaginationSchema = z.object({
+  limit: z.coerce.number().int().min(1).max(40).default(40),
+  skip: z.coerce.number().int().min(0).default(0),
+});
+
+export const MessageSchema = z.object({
+  message: z.string().min(1).max(10000),
+});
+
+export const SystemPromptSchema = z.object({
+  systemPrompt: z.string().min(1).max(10000),
+});
+
+export const ChatIdSchema = z.object({
+  chatId: z.uuid(),
+});
+
+export type Pagination = z.infer<typeof PaginationSchema>;
+export type Message = z.infer<typeof MessageSchema>;
+export type SystemPrompt = z.infer<typeof SystemPromptSchema>;
+export type ChatId = z.infer<typeof ChatIdSchema>;
