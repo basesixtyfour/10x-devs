@@ -78,13 +78,11 @@ export async function createChatMessage(userId: string, chatId: string, message:
     throw new Error("Not found or unauthorized");
   }
 
-  const updatedChat = await prisma.chat.update({
-    where: { id: chatId },
-    data: { messages: { create: { content: message, role: role } } },
-    include: { messages: true },
+  const newMessage = await prisma.message.create({
+    data: { content: message, role: role, chatId: chatId },
   });
 
-  return updatedChat;
+  return newMessage;
 }
 
 export async function storeStreamToDatabase(stream: ReadableStream, userId: string, chatId: string) {
@@ -130,10 +128,11 @@ export async function storeStreamToDatabase(stream: ReadableStream, userId: stri
       }
     }
 
-    await createChatMessage(userId, chatId, fullContent, "assistant");
-
+    const newMessage = await createChatMessage(userId, chatId, fullContent, "assistant");
     console.log(`✅ Stored assistant message for chat ${chatId}`);
+    return newMessage.id;
   } catch (error) {
     console.error("Error storing stream to database:", error);
+    return undefined;
   }
 }

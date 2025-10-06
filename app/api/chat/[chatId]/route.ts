@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-import { createChatMessage, storeStreamToDatabase, deleteChat } from "@/lib/server/chat";
+import { createChatMessage, storeStreamToDatabase, deleteChat, getChatMessages } from "@/lib/server/chat";
 import { OpenAI } from "openai";
 import { MessageSchema, ChatIdSchema } from "@/lib/server/validation";
 
@@ -10,8 +10,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
 });
 
-
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest, { params }: { params: { chatId: string } }) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -20,12 +19,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const chatIdParam = request.nextUrl.searchParams.get('chatId');
-  if (!chatIdParam) {
+	const chatIdParam = params.chatId;
+	if (!chatIdParam) {
     return NextResponse.json({ error: "Chat ID is required" }, { status: 400 });
   }
 
-  const chatIdParsed = ChatIdSchema.safeParse({ chatId: chatIdParam });
+	const chatIdParsed = ChatIdSchema.safeParse({ chatId: chatIdParam });
   if (!chatIdParsed.success) {
     return NextResponse.json({ error: "Invalid chat ID format" }, { status: 400 });
   }
@@ -40,19 +39,46 @@ export async function POST(request: NextRequest) {
   const { chatId } = chatIdParsed.data;
 
   try {
-    const chat = await createChatMessage(userId, chatId, message, "user");
+    const userMessageId = await createChatMessage(userId, chatId, message, "user");
+    const userMessages = await getChatMessages(userId, chatId);
 
     const responseStream = await openai.chat.completions.create({
       model: "x-ai/grok-4-fast:free",
-      messages: chat.messages,
+      messages: userMessages,
       stream: true,
     });
 
     const streams = responseStream.toReadableStream().tee();
-    
-    storeStreamToDatabase(streams[1], userId, chatId);
-    
-    return new NextResponse(streams[0], {
+    const assistantIdPromise = storeStreamToDatabase(streams[1], userId, chatId);
+
+    const encoder = new TextEncoder();
+    const reader = streams[0].getReader();
+    const composedStream = new ReadableStream({
+      async start(controller) {
+        if (userMessageId) {
+          const event = { event: "user_message_id", id: userMessageId };
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+        }
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          controller.enqueue(value);
+        }
+        try {
+          const assistantId = await assistantIdPromise;
+          if (assistantId) {
+            const event = { event: "assistant_message_id", id: assistantId };
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+          }
+        } catch {}
+        controller.close();
+      },
+      cancel() {
+        reader.cancel();
+      }
+    });
+
+    return new NextResponse(composedStream, {
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",

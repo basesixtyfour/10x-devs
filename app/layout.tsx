@@ -27,7 +27,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head />
       <body
-        className={`dark:bg-[#212121e6] dark:text-white box-border h-screen overflow-hidden ${geistMono.variable} ${geistSans.variable} antialiased`}
+        className={`dark:bg-[#212121] dark:text-white box-border ${geistMono.variable} ${geistSans.variable} antialiased`}
       >
         <ThemeProvider>{children}</ThemeProvider>
       </body>
