@@ -10,7 +10,8 @@ const openai = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
 });
 
-export async function POST(request: NextRequest, { params }: { params: { chatId: string } }) {
+export async function POST(request: NextRequest, props: { params: Promise<{ chatId: string }> }) {
+  const params = await props.params;
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -19,12 +20,12 @@ export async function POST(request: NextRequest, { params }: { params: { chatId:
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-	const chatIdParam = params.chatId;
-	if (!chatIdParam) {
-    return NextResponse.json({ error: "Chat ID is required" }, { status: 400 });
-  }
+  const chatIdParam = params.chatId;
+  if (!chatIdParam) {
+  return NextResponse.json({ error: "Chat ID is required" }, { status: 400 });
+}
 
-	const chatIdParsed = ChatIdSchema.safeParse({ chatId: chatIdParam });
+  const chatIdParsed = ChatIdSchema.safeParse({ chatId: chatIdParam });
   if (!chatIdParsed.success) {
     return NextResponse.json({ error: "Invalid chat ID format" }, { status: 400 });
   }
@@ -38,22 +39,45 @@ export async function POST(request: NextRequest, { params }: { params: { chatId:
   const { message } = messageParsed.data;
   const { chatId } = chatIdParsed.data;
 
-  try {
-    const userMessageId = await createChatMessage(userId, chatId, message, "user");
-    const userMessages = await getChatMessages(userId, chatId);
+  let userMessageId: string | undefined;
+  let userMessages: Array<{ role: "user" | "assistant" | "system"; content: string }>;
+  let responseStream: {
+    toReadableStream: () => ReadableStream<Uint8Array>;
+  };
+  let streams: ReadableStream[] = [];
+  let assistantIdPromise: Promise<string | undefined>;
+  let encoder: TextEncoder;
+  let reader: ReadableStreamDefaultReader<Uint8Array>;
+  let composedStream: ReadableStream;
 
-    const responseStream = await openai.chat.completions.create({
-      model: "x-ai/grok-4-fast:free",
+  try {
+    userMessageId = (await createChatMessage(userId, chatId, message, "user")).id;
+  } catch (_) {
+    return NextResponse.json({ error: "Failed to create user message" }, { status: 500 });
+  }
+
+  try {
+    userMessages = await getChatMessages(userId, chatId);
+  } catch (_) {
+    return NextResponse.json({ error: "Failed to fetch chat messages" }, { status: 500 });
+  }
+
+  try {
+    responseStream = await openai.chat.completions.create({
+      model: "openai/gpt-oss-20b:free",
       messages: userMessages,
       stream: true,
     });
+  } catch (_) {
+    return NextResponse.json({ error: "Failed to get OpenAI response" }, { status: 500 });
+  }
 
-    const streams = responseStream.toReadableStream().tee();
-    const assistantIdPromise = storeStreamToDatabase(streams[1], userId, chatId);
-
-    const encoder = new TextEncoder();
-    const reader = streams[0].getReader();
-    const composedStream = new ReadableStream({
+  try {
+    streams = responseStream.toReadableStream().tee();
+    assistantIdPromise = storeStreamToDatabase(streams[1], userId, chatId);
+    encoder = new TextEncoder();
+    reader = streams[0].getReader();
+    composedStream = new ReadableStream({
       async start(controller) {
         if (userMessageId) {
           const event = { event: "user_message_id", id: userMessageId };
@@ -62,7 +86,9 @@ export async function POST(request: NextRequest, { params }: { params: { chatId:
         while (true) {
           const { value, done } = await reader.read();
           if (done) break;
+          controller.enqueue(encoder.encode(`data:`));
           controller.enqueue(value);
+          controller.enqueue(encoder.encode(`\n`));
         }
         try {
           const assistantId = await assistantIdPromise;
@@ -77,20 +103,21 @@ export async function POST(request: NextRequest, { params }: { params: { chatId:
         reader.cancel();
       }
     });
-
-    return new NextResponse(composedStream, {
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
-      },
-    });
   } catch (error) {
-    return NextResponse.json({ error: "Chat not found or unauthorized" }, { status: 404 });
+    return NextResponse.json({ error: "Failed to stream response" }, { status: 500 });
   }
+
+  return new NextResponse(composedStream, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    },
+  });
 }
 
-export async function DELETE(request: NextRequest) {
+export async function DELETE(request: NextRequest, props: { params: Promise<{ chatId: string }> }) {
+  const params = await props.params;
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -100,7 +127,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   const userId = session.user.id;
-  const chatIdParam = request.nextUrl.searchParams.get('chatId');
+  const chatIdParam = params.chatId;
 
   if (!chatIdParam) {
     return NextResponse.json({ error: "Chat ID is required" }, { status: 400 });

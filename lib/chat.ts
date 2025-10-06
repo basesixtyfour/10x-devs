@@ -17,7 +17,7 @@ export async function sendChatMessage(
   const { data: session } = await authClient.getSession();
   if (!session) redirect("/login");
 
-  let currentChatId = chatId || (await createNewChat(systemPrompt)).id;
+  const currentChatId = chatId || (await createNewChat(systemPrompt)).id;
   setChatId(currentChatId);
 
   setMessage("");
@@ -35,19 +35,19 @@ export async function sendChatMessage(
     const body = await sendMessageToChat(currentChatId, trimmed);
 
     await streamChatResponse(body, (chunk) => {
-      if (chunk.event === "user_message_id" && chunk.id) {
+      if (chunk.event === "user_message_id" && typeof chunk.id === "string") {
         setChatMessages((prev) =>
           prev.map((m) =>
-            m.id === userTempId ? { ...m, id: chunk.id } : m
+            m.id === userTempId ? { ...m, id: chunk.id as string } : m
           )
         );
         return;
       }
 
-      if (chunk.event === "assistant_message_id" && chunk.id) {
+      if (chunk.event === "assistant_message_id" && typeof chunk.id === "string") {
         setChatMessages((prev) =>
           prev.map((m) =>
-            m.id === assistantTempId ? { ...m, id: chunk.id } : m
+            m.id === assistantTempId ? { ...m, id: chunk.id as string } : m
           )
         );
         return;

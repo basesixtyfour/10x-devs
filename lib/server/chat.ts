@@ -65,16 +65,16 @@ export async function getChatMessages(userId: string, chatId: string) {
   return messages;
 }
 
+
 export async function createChatMessage(userId: string, chatId: string, message: string, role: Role) {
-  const ownershipCheck = await prisma.chat.updateMany({
+  const chat = await prisma.chat.findFirst({
     where: { 
       id: chatId, 
       userId: userId 
-    },
-    data: {}
+    }
   });
 
-  if (ownershipCheck.count === 0) {
+  if (!chat) {
     throw new Error("Not found or unauthorized");
   }
 
@@ -98,7 +98,6 @@ export async function storeStreamToDatabase(stream: ReadableStream, userId: stri
       if (done) break;
 
       chunk += decoder.decode(value, { stream: true });
-      
       const lines = chunk.split('\n');
       chunk = lines.pop() || "";
       for (const line of lines) {

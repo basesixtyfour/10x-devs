@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
   try {
     const chat = await getChatMessages(userId, chatId);
     return NextResponse.json(chat);
-  } catch (error) {
+  } catch (_) {
     return NextResponse.json({ error: "Chat not found or unauthorized" }, { status: 404 });
   }
 }

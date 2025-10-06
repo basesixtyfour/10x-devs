@@ -21,7 +21,12 @@ export async function sendMessageToChat(chatId: string, message: string) {
 
 export async function streamChatResponse(
   body: ReadableStream<Uint8Array>,
-  onChunk: (chunk: any) => void
+  onChunk: (chunk: {
+    event?: string;
+    id?: string;
+    choices?: { delta?: { content?: string } }[];
+    content?: string;
+  }) => void
 ) {
   const reader = body.getReader();
   const decoder = new TextDecoder();
