@@ -4,7 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getChatMessages } from "@/lib/server/chat";
 import { ChatIdSchema } from "@/lib/server/validation";
 
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest, props: { params: Promise<{ chatId: string }> }) {
+  const params = await props.params;
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
   }
 
   const userId = session.user.id;
-  const chatIdParam = request.nextUrl.searchParams.get('chatId');
+  const chatIdParam = params.chatId;
   if (!chatIdParam) {
     return NextResponse.json({ error: "Chat ID is required" }, { status: 400 });
   }

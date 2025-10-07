@@ -1,8 +1,8 @@
-import { useChatContext } from "./Home";
+import { useChatContext } from "./ChatProvider";
 import MessageField from "./MessageField";
 import ResponseField from "./ResponseField";
 
-export default function ChatWindow({ className }: { className?: string }) {
+export default function ChatHistory({ className }: { className?: string }) {
   const { chatMessages } = useChatContext();
   return (
     <div className={className}>

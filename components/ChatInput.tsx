@@ -9,7 +9,7 @@ import {
 import { ArrowUpIcon, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { sendChatMessage } from "@/lib/chat";
-import { useChatContext } from "./Home";
+import { useChatContext } from "./ChatProvider";
 
 export default function ChatInput({ className }: { className?: string }) {
   const {
