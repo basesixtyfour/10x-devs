@@ -6,7 +6,6 @@ import ResponseField from "./ResponseField";
 
 export default function ChatHistory() {
   const { chatMessages } = useChatContext();
-
   return (
     <div className="grow md:w-3/5 md:mx-auto flex flex-col gap-4">
       {chatMessages.map((m) =>

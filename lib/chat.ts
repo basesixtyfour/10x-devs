@@ -10,9 +10,9 @@ export async function sendChatMessage(
   systemPrompt: string,
   chatId: string,
   setChatId: (chatId: string) => void,
-) {
+): Promise<string> {
   const trimmed = message.trim();
-  if (!trimmed) return;
+  if (!trimmed) return chatId;
 
   const { data: session } = await authClient.getSession();
   if (!session) redirect("/login");
@@ -52,8 +52,7 @@ export async function sendChatMessage(
         );
         return;
       }
-
-      const part = chunk.choices?.[0]?.delta?.content || chunk.content || "";
+      const part = chunk.choices?.[0]?.delta?.content || "";
       if (part) {
         setChatMessages((prev) =>
           prev.map((m) =>
@@ -65,4 +64,5 @@ export async function sendChatMessage(
   } catch (err) {
     console.error("Chat streaming error:", err);
   }
+  return currentChatId;
 }

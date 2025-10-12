@@ -104,29 +104,23 @@ export async function storeStreamToDatabase(stream: ReadableStream, userId: stri
         if (line.trim() === '') continue;
         if (line.trim() === '[DONE]') break;
         
-        if (line.startsWith('data: ')) {
-          try {
-            const jsonStr = line.slice(6);
-            if (jsonStr === '[DONE]') break;
-            
-            const data = JSON.parse(jsonStr);
-            const content = data.choices?.[0]?.delta?.content || "";
-            
-            if (fullContent.length + content.length > MAX_CONTENT_SIZE) {
-              console.warn(`Content size limit reached for chat ${chatId}`);
-              break;
-            }
-            
-            fullContent += content;
-          } catch (e) {
-            if (Math.random() < 0.01) {
-              console.warn('Stream parse error:', e instanceof Error ? e.message : String(e));
-            }
+        try {
+          const data = JSON.parse(line);
+          const content = data.choices?.[0]?.delta?.content || "";
+          
+          if (fullContent.length + content.length > MAX_CONTENT_SIZE) {
+            console.warn(`Content size limit reached for chat ${chatId}`);
+            break;
+          }
+          fullContent += content;
+        } catch (e) {
+          if (Math.random() < 0.01) {
+            console.warn('Stream parse error:', e instanceof Error ? e.message : String(e));
           }
         }
       }
     }
-
+    
     const newMessage = await createChatMessage(userId, chatId, fullContent, "assistant");
     console.log(`✅ Stored assistant message for chat ${chatId}`);
     return newMessage.id;

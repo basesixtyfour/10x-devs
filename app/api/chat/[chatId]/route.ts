@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createChatMessage, storeStreamToDatabase, deleteChat, getChatMessages } from "@/lib/server/chat";
 import { OpenAI } from "openai";
 import { MessageSchema, ChatIdSchema } from "@/lib/server/validation";
+import { mockStreamResponse } from "@/lib/server/mock";
 
 const openai = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
@@ -64,11 +65,12 @@ export async function POST(request: NextRequest, props: { params: Promise<{ chat
 
   try {
     responseStream = await openai.chat.completions.create({
-      model: "openai/gpt-oss-20b:free",
+      model: "google/gemini-2.5-flash-lite",
       messages: userMessages,
       stream: true,
     });
   } catch (_) {
+    console.error(_);
     return NextResponse.json({ error: "Failed to get OpenAI response" }, { status: 500 });
   }
 
@@ -86,7 +88,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ chat
         while (true) {
           const { value, done } = await reader.read();
           if (done) break;
-          controller.enqueue(encoder.encode(`data:`));
+          controller.enqueue(encoder.encode(`data: `));
           controller.enqueue(value);
           controller.enqueue(encoder.encode(`\n`));
         }

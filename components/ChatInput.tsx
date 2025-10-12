@@ -10,8 +10,10 @@ import { ArrowUpIcon, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { sendChatMessage } from "@/lib/chat";
 import { useChatContext } from "./ChatProvider";
+import { useRouter } from "next/navigation";
 
 export default function ChatInput({ className }: { className?: string }) {
+  const router = useRouter();
   const {
     message,
     setMessage,
@@ -42,7 +44,11 @@ export default function ChatInput({ className }: { className?: string }) {
               systemPrompt,
               chatId,
               setChatId
-            );
+            ).then((newId) => {
+              if (!chatId && newId) {
+                router.push(`/${newId}`);
+              }
+            });
           }
         }}
       />
@@ -61,7 +67,11 @@ export default function ChatInput({ className }: { className?: string }) {
             systemPrompt,
             chatId,
             setChatId
-          );
+          ).then((newId) => {
+            if (!chatId && newId) {
+              router.push(`/${newId}`);
+            }
+          });
         }}
       >
         <ArrowUpIcon />

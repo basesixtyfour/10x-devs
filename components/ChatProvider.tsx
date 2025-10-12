@@ -7,7 +7,6 @@ import {
   ReactNode,
   useEffect,
 } from "react";
-import { useRouter } from "next/navigation";
 import { ChatMessage } from "@/types";
 
 interface ChatContextType {
@@ -42,19 +41,14 @@ export function ChatProvider({
   initialMessages = [],
   children,
 }: ChatProviderProps) {
-  const router = useRouter();
   const [chatId, setChatIdState] = useState(initialChatId);
   const [systemPrompt, setSystemPrompt] = useState("Be concise");
   const [message, setMessage] = useState("");
   const [chatMessages, setChatMessages] =
     useState<ChatMessage[]>(initialMessages);
 
-  // Navigate to chat route when chatId changes (new chat created)
   const setChatId = (newChatId: string) => {
     setChatIdState(newChatId);
-    if (newChatId && newChatId !== initialChatId) {
-      router.push(`/${newChatId}`);
-    }
   };
 
   return (

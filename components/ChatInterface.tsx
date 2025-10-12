@@ -1,7 +1,7 @@
 import { ChatMessage } from "@/types";
 import H1 from "@/components/ui/H1";
 import ChatInput from "@/components/ChatInput";
-import { ChatProvider } from "@/components/ChatProvider";
+import HydrateChat from "@/components/HydrateChat";
 import ChatHistory from "@/components/ChatHistory";
 
 interface ChatInterfaceProps {
@@ -16,13 +16,12 @@ export default function ChatInterface({
   return (
     <div className="h-screen flex flex-col">
       <H1 className="w-fit p-4">10x Devs</H1>
-      <ChatProvider
+      <HydrateChat
         initialChatId={initialChatId}
         initialMessages={initialMessages}
-      >
-        <ChatHistory />
-        <ChatInput className="text-4xl" />
-      </ChatProvider>
+      />
+      <ChatHistory />
+      <ChatInput className="text-4xl" />
     </div>
   );
 }

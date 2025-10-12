@@ -20,12 +20,10 @@ export default async function ChatPage({
   const { chatId } = await params;
 
   try {
-    // SSR magic - fetch messages on the server
     const messages = await getChatMessages(session.user.id, chatId);
-
+    console.log(messages);
     return <ChatInterface initialChatId={chatId} initialMessages={messages} />;
   } catch (error) {
-    // Chat not found or unauthorized
     redirect("/");
   }
 }

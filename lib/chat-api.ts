@@ -4,7 +4,6 @@ export async function createNewChat(systemPrompt: string) {
     body: JSON.stringify({ systemPrompt }),
   });
   if (!response.ok) {
-    console.error("Failed to create chat", response);
     throw new Error("Failed to create chat");
   }
   return response.json();
@@ -41,8 +40,8 @@ export async function streamChatResponse(
     buffer = lines.pop() || "";
 
     for (const line of lines) {
-      if (!line.startsWith("data:")) continue;
-      const raw = line.slice(5).trim();
+      if (!line.startsWith("data: ")) continue;
+      const raw = line.slice(6).trim();
       if (!raw) continue;
 
       try {
