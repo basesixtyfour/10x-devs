@@ -21,7 +21,6 @@ export default async function ChatPage({
 
   try {
     const messages = await getChatMessages(session.user.id, chatId);
-    console.log(messages);
     return <ChatInterface initialChatId={chatId} initialMessages={messages} />;
   } catch (error) {
     redirect("/");

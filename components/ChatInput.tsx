@@ -25,7 +25,7 @@ export default function ChatInput({ className }: { className?: string }) {
   return (
     <InputGroup
       className={cn(
-        "md:w-3/5 mx-4 px-4 py-6 md:mx-auto my-4 w-[calc(100%-2rem)] rounded-4xl dark:bg-[#303030] border-none",
+        "md:w-3/5 mx-4 px-4 py-6 md:mx-auto my-4 w-[calc(100%-2rem)] rounded-4xl bg-chat-input border-none",
         className
       )}
     >

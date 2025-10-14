@@ -31,10 +31,17 @@ export default function LoginPage() {
     }
   }
 
+  async function onSubmitGoogle(e: React.FormEvent) {
+    e.preventDefault();
+    const data = await authClient.signIn.social({
+      provider: "google",
+    });
+  }
+
   return (
     <main className="max-w-sm mx-auto pt-20 px-4">
       <h1 className="text-2xl font-bold mb-6">Sign in</h1>
-      <form onSubmit={onSubmit} className="space-y-3">
+      <form className="space-y-3">
         <input
           type="email"
           placeholder="you@example.com"
@@ -55,11 +62,20 @@ export default function LoginPage() {
         />
         {err && <p className="text-red-600 text-sm">{err}</p>}
         <button
-          type="submit"
+          type="button"
           disabled={loading}
-          className="w-full bg-black text-white rounded py-2"
+          onClick={onSubmit}
+          className="w-full bg-black text-white rounded py-2 cursor-pointer"
         >
           {loading ? "Signing in..." : "Sign in"}
+        </button>
+        <button
+          type="button"
+          onClick={onSubmitGoogle}
+          disabled={loading}
+          className="w-full bg-black text-white rounded py-2 cursor-pointer"
+        >
+          {loading ? "Signing in..." : "Sign in with Google"}
         </button>
       </form>
       <p className="text-sm mt-4">
