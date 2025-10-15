@@ -102,7 +102,6 @@ export async function storeStreamToDatabase(stream: ReadableStream, userId: stri
       chunk = lines.pop() || "";
       for (const line of lines) {
         if (line.trim() === '') continue;
-        if (line.trim() === '[DONE]') break;
         
         try {
           const data = JSON.parse(line);
@@ -114,15 +113,12 @@ export async function storeStreamToDatabase(stream: ReadableStream, userId: stri
           }
           fullContent += content;
         } catch (e) {
-          if (Math.random() < 0.01) {
-            console.warn('Stream parse error:', e instanceof Error ? e.message : String(e));
-          }
+          console.warn('Stream parse error:', e instanceof Error ? e.message : String(e));
         }
       }
     }
     
     const newMessage = await createChatMessage(userId, chatId, fullContent, "assistant");
-    console.log(`✅ Stored assistant message for chat ${chatId}`);
     return newMessage.id;
   } catch (error) {
     console.error("Error storing stream to database:", error);
