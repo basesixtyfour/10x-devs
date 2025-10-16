@@ -17,7 +17,7 @@ export async function sendChatMessage(
   const { data: session } = await authClient.getSession();
   if (!session) redirect("/login");
 
-  const currentChatId = chatId || (await createNewChat(systemPrompt)).id;
+  const currentChatId = chatId || (await createNewChat(systemPrompt, message)).id;
   setChatId(currentChatId);
 
   setMessage("");

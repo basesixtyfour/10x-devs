@@ -1,12 +1,14 @@
-export async function createNewChat(systemPrompt: string) {
+export async function createNewChat(systemPrompt: string, message: string) {
   const response = await fetch("/api/chat", {
     method: "POST",
-    body: JSON.stringify({ systemPrompt }),
+    body: JSON.stringify({ systemPrompt, message}),
   });
   if (!response.ok) {
     throw new Error("Failed to create chat");
   }
-  return response.json();
+  const data = await response.json();
+  console.log("createNewChat data", data);
+  return data;
 }
 
 export async function sendMessageToChat(chatId: string, message: string) {

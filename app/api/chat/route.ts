@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { getChats, createNewChat } from "@/lib/server/chat";
-import { SystemPromptSchema, PaginationSchema } from "@/lib/server/validation";
+import { NewChatSchema, PaginationSchema } from "@/lib/server/validation";
 
 
 export async function GET(request: NextRequest) {
@@ -36,13 +36,14 @@ export async function POST(request: NextRequest) {
   }
 
   const userId = session.user.id;
-  const parsed = SystemPromptSchema.safeParse(await request.json());
+  const parsed = NewChatSchema.safeParse(await request.json());
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid system prompt" }, { status: 400 });
+    console.error(parsed);
+    return NextResponse.json({ error: "Invalid new chat data" }, { status: 400 });
   }
 
-  const { systemPrompt } = parsed.data;
-  const chat = await createNewChat(userId, systemPrompt);
+  const { systemPrompt, message } = parsed.data;
+  const chat = await createNewChat(userId, systemPrompt, message);
   
   return NextResponse.json(chat);
 }

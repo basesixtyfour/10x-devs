@@ -9,8 +9,9 @@ export const MessageSchema = z.object({
   message: z.string().min(1).max(10000),
 });
 
-export const SystemPromptSchema = z.object({
+export const NewChatSchema = z.object({
   systemPrompt: z.string().min(1).max(10000),
+  message: z.string().min(1).max(10000),
 });
 
 export const ChatIdSchema = z.object({
@@ -19,5 +20,5 @@ export const ChatIdSchema = z.object({
 
 export type Pagination = z.infer<typeof PaginationSchema>;
 export type Message = z.infer<typeof MessageSchema>;
-export type SystemPrompt = z.infer<typeof SystemPromptSchema>;
+export type NewChat = z.infer<typeof NewChatSchema>;
 export type ChatId = z.infer<typeof ChatIdSchema>;

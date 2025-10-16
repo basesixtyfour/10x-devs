@@ -1,6 +1,7 @@
 import { prisma } from "../prisma";
 import { Role } from "@prisma/client";
 import { Pagination } from "./validation";
+import { openai } from "./openai";
 
 export async function getChats(userId: string, { limit, skip }: Pagination) {
   const chats = await prisma.chat.findMany({
@@ -16,19 +17,33 @@ export async function getChats(userId: string, { limit, skip }: Pagination) {
   return chats;
 }
 
-export async function createNewChat(userId: string, systemPrompt: string) {
+export async function createNewChat(userId: string, systemPrompt: string, message: string) {
   const chat = await prisma.chat.create({
     data: {
       userId: userId,
-      messages: {
-        create: {
-          content: systemPrompt,
-          role: "system",
-        },
-      },
-    },
+      title: "New Chat",
+    }
   });
-  return chat;
+
+  const formattedMessages = [
+    { role: Role.system, content: "Summarize the following chat in 3 to 5 words. Keep it concise and descriptive." },
+    { role: Role.user, content: message }
+  ];
+
+  const chatTitleResponse = await openai.chat.completions.create({
+    model: "google/gemini-2.5-flash-lite",
+    messages: formattedMessages,
+  });
+
+  const chatTitle = chatTitleResponse.choices[0].message.content;
+  console.log("chatTitle", chatTitle);
+
+  await prisma.chat.update({
+    where: { id: chat.id },
+    data: { title: chatTitle }
+  })
+
+  return { ...chat, title: chatTitle }; 
 }
 
 export async function deleteChat(userId: string, chatId: string) {

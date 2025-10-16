@@ -8,9 +8,9 @@ datasource db {
 }
 
 enum Role {
-  system
   user
   assistant
+  system
 }
 
 model User {
@@ -32,6 +32,7 @@ model Chat {
   id        String    @id @default(uuid(7))
   userId    String
   user      User      @relation(fields: [userId], references: [id])
+  title     String?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   messages  Message[]
@@ -44,7 +45,7 @@ model Message {
   chat      Chat     @relation(fields: [chatId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  role      Role     @default(system)
+  role      Role
 }
 
 model Session {
