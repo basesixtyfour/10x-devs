@@ -1,5 +1,10 @@
 import ChatInterface from "@/components/ChatInterface";
+import { ChatProvider } from "@/components/ChatProvider";
 
 export default async function HomePage() {
-  return <ChatInterface initialMessages={[]} />;
+  return (
+    <ChatProvider>
+      <ChatInterface />
+    </ChatProvider>
+  );
 }

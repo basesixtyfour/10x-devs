@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getChatMessages } from "@/lib/server/chat";
 import ChatInterface from "@/components/ChatInterface";
+import { ChatProvider } from "@/components/ChatProvider";
 
 export default async function ChatPage({
   params,
@@ -21,7 +22,11 @@ export default async function ChatPage({
 
   try {
     const messages = await getChatMessages(session.user.id, chatId);
-    return <ChatInterface initialChatId={chatId} initialMessages={messages} />;
+    return (
+      <ChatProvider initialChatId={chatId} initialMessages={messages}>
+        <ChatInterface />
+      </ChatProvider>
+    );
   } catch (error) {
     redirect("/");
   }
