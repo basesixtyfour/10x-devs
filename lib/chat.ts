@@ -1,68 +1,72 @@
-import { ChatMessage } from "@/types";
-import { authClient } from "@/lib/auth-client";
-import { redirect } from "next/navigation";
 import { createNewChat, sendMessageToChat, streamChatResponse } from "@/lib/chat-api";
+import { useChatContext } from "@/components/ChatProvider";
+import { useAppContext } from "@/components/AppProvider";
+import { Chat, Role } from "@prisma/client"
+import { useCallback } from "react";
 
-export async function sendChatMessage(
-  message: string,
-  setMessage: (message: string) => void,
-  setChatMessages: (updater: React.SetStateAction<ChatMessage[]>) => void,
-  systemPrompt: string,
-  chatId: string,
-  setChatId: (chatId: string) => void,
-): Promise<string> {
-  const trimmed = message.trim();
-  if (!trimmed) return chatId;
+export function useSendChatMessage() {
+  const { message, setMessage, setChatMessages, systemPrompt, currentChat, setCurrentChat } = useChatContext();
+  const { chats, setChats, setActiveChat } = useAppContext();
 
-  const { data: session } = await authClient.getSession();
-  if (!session) redirect("/login");
+  const send = async (abortSignal: AbortSignal): Promise<string> => {
+    const content = message.trim();
+    if (!content) return "Message must be non-zero";
 
-  const currentChatId = chatId || (await createNewChat(systemPrompt, message)).id;
-  setChatId(currentChatId);
+    let chat = currentChat;
+    if (!chat) {
+      chat = await createNewChat(systemPrompt, content) as Chat;
+      setCurrentChat(chat);
+      setActiveChat(chat);
+      setChats([chat, ...chats]);
+    }
 
-  setMessage("");
+    const currentChatId = chat.id;
+    setMessage("");
 
-  const userTempId = crypto.randomUUID();
-  const assistantTempId = crypto.randomUUID();
+    const userTempId = crypto.randomUUID();
+    const assistantTempId = crypto.randomUUID();
 
-  setChatMessages((prev) => [
-    ...prev,
-    { id: userTempId, role: "user", content: trimmed },
-    { id: assistantTempId, role: "assistant", content: "" },
-  ]);
+    setChatMessages((prev) => [
+      ...prev,
+      { id: userTempId, role: Role.user, content: content },
+      { id: assistantTempId, role: Role.assistant, content: "" },
+    ]);
 
-  try {
-    const body = await sendMessageToChat(currentChatId, trimmed);
+    try {
+      const body = await sendMessageToChat(currentChatId, content, abortSignal);
 
-    await streamChatResponse(body, (chunk) => {
-      if (chunk.event === "user_message_id" && typeof chunk.id === "string") {
-        setChatMessages((prev) =>
-          prev.map((m) =>
-            m.id === userTempId ? { ...m, id: chunk.id as string } : m
-          )
-        );
-        return;
-      }
+      await streamChatResponse(body, (chunk) => {
+        if (chunk.event === "user_message_id" && typeof chunk.id === "string") {
+          setChatMessages((prev) =>
+            prev.map((m) =>
+              m.id === userTempId ? { ...m, id: chunk.id as string } : m
+            )
+          );
+          return;
+        }
 
-      if (chunk.event === "assistant_message_id" && typeof chunk.id === "string") {
-        setChatMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantTempId ? { ...m, id: chunk.id as string } : m
-          )
-        );
-        return;
-      }
-      const part = chunk.choices?.[0]?.delta?.content || "";
-      if (part) {
-        setChatMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantTempId ? { ...m, content: m.content + part } : m
-          )
-        );
-      }
-    });
-  } catch (err) {
-    console.error("Chat streaming error:", err);
+        if (chunk.event === "assistant_message_id" && typeof chunk.id === "string") {
+          setChatMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantTempId ? { ...m, id: chunk.id as string } : m
+            )
+          );
+          return;
+        }
+        const part = chunk.choices?.[0]?.delta?.content || "";
+        if (part) {
+          setChatMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantTempId ? { ...m, content: m.content + part } : m
+            )
+          );
+        }
+      });
+    } catch (err) {
+      console.error("Chat streaming error:", err);
+    }
+    return currentChatId;
   }
-  return currentChatId;
+
+  return send;
 }

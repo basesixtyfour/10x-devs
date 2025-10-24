@@ -7,24 +7,35 @@ import { MessageSchema, ChatIdSchema } from "@/lib/server/validation";
 import { jsonError, sseHeaders } from "@/lib/server/http";
 import { createSSEStream } from "@/lib/server/sse";
 import ratelimit from "@/lib/ratelimit";
+import { Prisma, Role } from "@prisma/client";
 
 export async function POST(request: NextRequest, props: { params: Promise<{ chatId: string }> }) {
+  const checkAborted = () => {
+    if (request.signal.aborted) {
+      throw new Error("Request aborted");
+    }
+  };
+
+  checkAborted();
+  
   const params = await props.params;
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
-  const clientIp = (request.headers.get('x-forwarded-for') || '127.0.0.1').split(',')[0].trim()
-  const { success } = await ratelimit.limit(clientIp);
-  if (!success) {
-    return jsonError("Rate limit exceeded", 429);
-  }
-
   if (!session) {
     return jsonError("Unauthorized", 401);
   }
 
+  checkAborted();
+
+  const { success } = await ratelimit.limit(session.user.id);
+  if (!success) {
+    return jsonError("Rate limit exceeded", 429);
+  }
+
   const chatIdParam = params.chatId;
+
   if (!chatIdParam) {
     return jsonError("Chat ID is required", 400);
   }
@@ -43,10 +54,13 @@ export async function POST(request: NextRequest, props: { params: Promise<{ chat
   const userId = session.user.id;
   const { message } = messageParsed.data;
   const { chatId } = chatIdParsed.data;
-
   try {
-    const userMessageId = (await createChatMessage(userId, chatId, message, "user")).id;
+    checkAborted();
+
+    const userMessageId = (await createChatMessage(userId, chatId, message, Role.user)).id;
     const userMessages = await getChatMessages(userId, chatId);
+    
+    checkAborted();
 
     const completionStream = await openai.chat.completions.create({
       model: "google/gemini-2.5-flash-lite",
@@ -54,12 +68,23 @@ export async function POST(request: NextRequest, props: { params: Promise<{ chat
       stream: true,
     });
 
+    const abortStreamHandler = () => {
+      console.log("Stream cancelled");
+      completionStream.controller.abort();
+    };
+
+    request.signal.addEventListener("abort", abortStreamHandler);
+
     const [forwardStream, persistStream] = completionStream.toReadableStream().tee();
-    const assistantIdPromise = storeStreamToDatabase(persistStream, userId, chatId);
-    const sseStream = createSSEStream(forwardStream, assistantIdPromise, userMessageId);
+    const assistantIdPromise = storeStreamToDatabase(persistStream, userId, chatId, () => request.signal.aborted);
+    const sseStream = createSSEStream(forwardStream, assistantIdPromise, userMessageId, () => request.signal.aborted);
 
     return new NextResponse(sseStream, { headers: sseHeaders() });
   } catch (err) {
+    if (err instanceof Error && err.message === "Request aborted") {
+      console.log("Caught abort during processing");
+      return jsonError("Request cancelled", 499);
+    }
     console.error("/api/chat/[chatId] POST failed", err);
     return jsonError("Internal server error", 500);
   }
@@ -72,19 +97,19 @@ export async function DELETE(request: NextRequest, props: { params: Promise<{ ch
   });
 
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return jsonError("Unauthorized", 401);
   }
 
   const userId = session.user.id;
   const chatIdParam = params.chatId;
 
   if (!chatIdParam) {
-    return NextResponse.json({ error: "Chat ID is required" }, { status: 400 });
+    return jsonError("Chat ID is required", 400);
   }
 
   const chatIdParsed = ChatIdSchema.safeParse({ chatId: chatIdParam });
   if (!chatIdParsed.success) {
-    return NextResponse.json({ error: "Invalid chat ID format" }, { status: 400 });
+    return jsonError("Invalid chat ID format", 400);
   }
 
   const { chatId } = chatIdParsed.data;
@@ -93,6 +118,12 @@ export async function DELETE(request: NextRequest, props: { params: Promise<{ ch
     const chat = await deleteChat(userId, chatId);
     return NextResponse.json(chat);
   } catch (error) {
-    return NextResponse.json({ error: "Chat not found or unauthorized" }, { status: 404 });
+    console.error("/api/chat/[chatId] DELETE failed", error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2025") {
+        return jsonError("Chat not found", 404);
+      } 
+    }
+    return jsonError("Internal server error", 500);
   }
 }

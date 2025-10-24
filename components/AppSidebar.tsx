@@ -16,7 +16,6 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarContent>
-        <SidebarHeader>10x-Devs</SidebarHeader>
         <SidebarMenuButton asChild>
           <NewChatButton />
         </SidebarMenuButton>

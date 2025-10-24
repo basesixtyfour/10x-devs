@@ -7,17 +7,25 @@ export async function createNewChat(systemPrompt: string, message: string) {
     throw new Error("Failed to create chat");
   }
   const data = await response.json();
-  console.log("createNewChat data", data);
   return data;
 }
 
-export async function sendMessageToChat(chatId: string, message: string) {
+export async function sendMessageToChat(chatId: string, message: string, abortSignal: AbortSignal) {
   const res = await fetch(`/api/chat/${chatId}`, {
     method: "POST",
     body: JSON.stringify({ message }),
+    signal: abortSignal,
   });
   if (!res.ok || !res.body) throw new Error("Failed to send message");
   return res.body;
+}
+
+export async function deleteChat(chatId: string) {
+  const res = await fetch(`/api/chat/${chatId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("Failed to delete chat");
+  return res.json();
 }
 
 export async function streamChatResponse(

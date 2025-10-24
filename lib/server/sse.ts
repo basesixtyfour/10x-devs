@@ -1,7 +1,8 @@
 export function createSSEStream(
   source: ReadableStream<Uint8Array>,
   assistantIdPromise: Promise<string | undefined>,
-  userMessageId?: string
+  userMessageId: string,
+  isAborted: () => boolean
 ) {
   const encoder = new TextEncoder();
   const reader = source.getReader();
@@ -11,7 +12,7 @@ export function createSSEStream(
         const event = { event: "user_message_id", id: userMessageId };
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
       }
-      while (true) {
+      while (!isAborted()) {
         const { value, done } = await reader.read();
         if (done) break;
         controller.enqueue(encoder.encode("data: "));

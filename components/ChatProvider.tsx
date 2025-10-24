@@ -8,10 +8,11 @@ import {
   useEffect,
 } from "react";
 import { ChatMessage } from "@/types";
+import { Chat } from "@prisma/client";
 
 interface ChatContextType {
-  chatId: string;
-  setChatId: (chatId: string) => void;
+  currentChat: Chat | undefined;
+  setCurrentChat: (chat: Chat) => void;
   systemPrompt: string;
   setSystemPrompt: React.Dispatch<React.SetStateAction<string>>;
   message: string;
@@ -31,31 +32,27 @@ export function useChatContext() {
 }
 
 interface ChatProviderProps {
-  initialChatId?: string;
+  initialChat?: Chat;
   initialMessages?: ChatMessage[];
   children: ReactNode;
 }
 
 export function ChatProvider({
-  initialChatId = "",
+  initialChat,
   initialMessages = [],
   children,
 }: ChatProviderProps) {
-  const [chatId, setChatIdState] = useState(initialChatId);
+  const [currentChat, setCurrentChat] = useState<Chat | undefined>(initialChat);
   const [systemPrompt, setSystemPrompt] = useState("Be concise");
   const [message, setMessage] = useState("");
   const [chatMessages, setChatMessages] =
     useState<ChatMessage[]>(initialMessages);
 
-  const setChatId = (newChatId: string) => {
-    setChatIdState(newChatId);
-  };
-
   return (
     <ChatContext.Provider
       value={{
-        chatId,
-        setChatId,
+        currentChat,
+        setCurrentChat,
         systemPrompt,
         setSystemPrompt,
         message,

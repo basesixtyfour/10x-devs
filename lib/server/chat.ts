@@ -22,11 +22,16 @@ export async function createNewChat(userId: string, systemPrompt: string, messag
     data: {
       userId: userId,
       title: "New Chat",
+      messages: {
+        create: [
+          { role: Role.system, content: systemPrompt },
+        ]
+      }
     }
   });
 
   const formattedMessages = [
-    { role: Role.system, content: "Summarize the following chat in 3 to 5 words. Keep it concise and descriptive." },
+    { role: Role.system, content: "Summarize the following chat in 2 to 3 words. Keep it concise and descriptive." },
     { role: Role.user, content: message }
   ];
 
@@ -36,7 +41,6 @@ export async function createNewChat(userId: string, systemPrompt: string, messag
   });
 
   const chatTitle = chatTitleResponse.choices[0].message.content;
-  console.log("chatTitle", chatTitle);
 
   await prisma.chat.update({
     where: { id: chat.id },
@@ -47,30 +51,35 @@ export async function createNewChat(userId: string, systemPrompt: string, messag
 }
 
 export async function deleteChat(userId: string, chatId: string) {
-  const result = await prisma.chat.deleteMany({
+  const result = await prisma.chat.delete({
     where: {
       id: chatId,
       userId: userId
     }
   });
-  
-  if (result.count === 0) {
-    throw new Error("Not found or unauthorized");
-  }
+
   
   return { id: chatId };
 }
 
+export async function getChat(userId: string, chatId: string) {
+  return await prisma.chat.findFirstOrThrow({
+    where: { id: chatId, userId: userId },
+    include: {
+      messages: {
+        orderBy: { createdAt: "asc" }
+      }
+    }
+  });
+}
+
 export async function getChatMessages(userId: string, chatId: string) {
-  const chat = await prisma.chat.findFirst({
+  const chat = await prisma.chat.findFirstOrThrow({
     where: { 
       id: chatId, 
       userId: userId 
     }
   });
-
-  if (!chat) 
-    throw new Error("Not found or unauthorized");
 
   const messages = await prisma.message.findMany({
     where: { chatId: chatId },
@@ -82,25 +91,19 @@ export async function getChatMessages(userId: string, chatId: string) {
 
 
 export async function createChatMessage(userId: string, chatId: string, message: string, role: Role) {
-  const chat = await prisma.chat.findFirst({
+  await prisma.chat.findFirstOrThrow({
     where: { 
       id: chatId, 
       userId: userId 
     }
   });
 
-  if (!chat) {
-    throw new Error("Not found or unauthorized");
-  }
-
-  const newMessage = await prisma.message.create({
+  return await prisma.message.create({
     data: { content: message, role: role, chatId: chatId },
   });
-
-  return newMessage;
 }
 
-export async function storeStreamToDatabase(stream: ReadableStream, userId: string, chatId: string) {
+export async function storeStreamToDatabase(stream: ReadableStream, userId: string, chatId: string, isAborted: () => boolean) {
   try {
     const reader = stream.getReader();
     const decoder = new TextDecoder();
@@ -108,7 +111,7 @@ export async function storeStreamToDatabase(stream: ReadableStream, userId: stri
     let chunk = "";
     const MAX_CONTENT_SIZE = 100000;
 
-    while (true) {
+    while (!isAborted()) {
       const { done, value } = await reader.read();
       if (done) break;
 
@@ -133,7 +136,12 @@ export async function storeStreamToDatabase(stream: ReadableStream, userId: stri
       }
     }
     
-    const newMessage = await createChatMessage(userId, chatId, fullContent, "assistant");
+    if (isAborted()) {
+      console.log("Stream aborted, skipping database storage");
+      return undefined;
+    }
+    
+    const newMessage = await createChatMessage(userId, chatId, fullContent, Role.assistant);
     return newMessage.id;
   } catch (error) {
     console.error("Error storing stream to database:", error);

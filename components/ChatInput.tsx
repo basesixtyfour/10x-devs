@@ -6,35 +6,28 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "./ui/input-group";
-import { ArrowUpIcon, MessageCircle, Loader2 } from "lucide-react";
+import { ArrowUpIcon, MessageCircle, Ban } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { sendChatMessage } from "@/lib/chat";
+import { useSendChatMessage } from "@/lib/chat";
 import { useChatContext } from "./ChatProvider";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 export default function ChatInput({ className }: { className?: string }) {
   const router = useRouter();
   const {
     message,
     setMessage,
-    setChatMessages,
-    systemPrompt,
-    chatId,
-    setChatId,
+    currentChat: { id: chatId } = {},
   } = useChatContext();
   const [isLoading, setIsLoading] = useState(false);
+  const sendChatMessage = useSendChatMessage();
+  const controller = useRef(new AbortController());
+  const abortSignal = controller.current.signal;
 
   const handleSendMessage = () => {
     setIsLoading(true);
-    sendChatMessage(
-      message,
-      setMessage,
-      setChatMessages,
-      systemPrompt,
-      chatId,
-      setChatId
-    )
+    sendChatMessage(abortSignal)
       .then((newId) => {
         if (!chatId && newId) {
           router.push(`/${newId}`);
@@ -43,6 +36,12 @@ export default function ChatInput({ className }: { className?: string }) {
       .finally(() => {
         setIsLoading(false);
       });
+  };
+
+  const handleCancelMessage = () => {
+    controller.current.abort();
+    console.log("cancelled");
+    setIsLoading(false);
   };
 
   return (
@@ -68,7 +67,7 @@ export default function ChatInput({ className }: { className?: string }) {
         <MessageCircle />
       </InputGroupAddon>
       {isLoading ? (
-        <Loader2 className="animate-spin" />
+        <Ban className="animate-spin" onClick={handleCancelMessage} />
       ) : (
         <InputGroupButton
           variant="default"
