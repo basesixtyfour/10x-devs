@@ -34,12 +34,8 @@ export default async function RootLayout({
     headers: await headers(),
   });
 
-  if (!session) {
-    return null;
-  }
-
-  const userId = session.user.id;
-  const chats = await getChats(userId, { limit: 10, skip: 0 });
+  const userId = session?.user.id;
+  const chats = userId ? await getChats(userId, { limit: 10, skip: 0 }) : [];
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -50,7 +46,7 @@ export default async function RootLayout({
         <ThemeProvider>
           <AppProvider initialChats={chats}>
             <SidebarProvider>
-              <AppSidebar />
+              {session && <AppSidebar />}
               <main className="flex w-full">
                 <ConditionalSidebarTrigger />
                 {children}
