@@ -1,5 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import MarkDown from "@/components/MarkDown";
+import { useChatContext } from "./ChatProvider";
+import ChatBubbleSkeleton from "./ChatBubbleSkeleton";
 
 export default function ChatBubble({
   role,
@@ -8,6 +10,7 @@ export default function ChatBubble({
   role: "user" | "assistant" | "system";
   content: string;
 }) {
+  const { isLoading } = useChatContext();
   if (role === "system") {
     return null;
   }
@@ -18,7 +21,10 @@ export default function ChatBubble({
       </div>
     );
   }
-  return (
+
+  return isLoading && content.length === 0 ? (
+    <ChatBubbleSkeleton />
+  ) : (
     <Card className="text-lg dark:bg-chat-bubble-assistant border-none shadow-none">
       <CardContent>
         <MarkDown content={content} />

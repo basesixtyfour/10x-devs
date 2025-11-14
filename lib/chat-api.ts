@@ -11,7 +11,7 @@ export async function createNewChat(systemPrompt: string, message: string) {
 }
 
 export async function sendMessageToChat(chatId: string, message: string, abortSignal: AbortSignal) {
-  const res = await fetch(`/api/chat/${chatId}`, {
+  const res = await fetch(`/api/chat/${chatId}/messages`, {
     method: "POST",
     body: JSON.stringify({ message }),
     signal: abortSignal,

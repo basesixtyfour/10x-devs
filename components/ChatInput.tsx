@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { useSendChatMessage } from "@/lib/chat";
 import { useChatContext } from "./ChatProvider";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 
 export default function ChatInput({ className }: { className?: string }) {
   const router = useRouter();
@@ -19,11 +19,20 @@ export default function ChatInput({ className }: { className?: string }) {
     message,
     setMessage,
     currentChat: { id: chatId } = {},
+    isLoading,
+    setIsLoading,
   } = useChatContext();
-  const [isLoading, setIsLoading] = useState(false);
   const sendChatMessage = useSendChatMessage();
   const controller = useRef(new AbortController());
   const abortSignal = controller.current.signal;
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [message]);
 
   const handleSendMessage = () => {
     setIsLoading(true);
@@ -39,19 +48,20 @@ export default function ChatInput({ className }: { className?: string }) {
   };
 
   const handleCancelMessage = () => {
-    controller.current.abort();
-    console.log("cancelled");
+    controller.current.abort({ name: "Chat Response cancelled" });
+    controller.current = new AbortController();
     setIsLoading(false);
   };
 
   return (
     <InputGroup
       className={cn(
-        "md:w-3/5 mx-4 px-4 py-6 md:mx-auto my-4 w-[calc(100%-2rem)] rounded-4xl bg-chat-input border-none",
+        "md:w-3/5 mx-4 px-4 py-2 md:mx-auto my-4 w-[calc(100%-2rem)] rounded-4xl border-none dark:bg-[#2b2b2b] h-auto min-h-9 shrink-0",
         className
       )}
     >
       <InputGroupInput
+        id="chat-input-message"
         className="text-xl md:text-xl"
         placeholder="Ask me anything"
         value={message}

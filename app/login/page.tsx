@@ -33,7 +33,7 @@ export default function LoginPage() {
 
   async function onSubmitGoogle(e: React.FormEvent) {
     e.preventDefault();
-    const data = await authClient.signIn.social({
+    await authClient.signIn.social({
       provider: "google",
     });
   }
@@ -75,7 +75,7 @@ export default function LoginPage() {
           disabled={loading}
           className="w-full bg-black text-white rounded py-2 cursor-pointer"
         >
-          {loading ? "Signing in..." : "Sign in with Google"}
+          Sign in with Google
         </button>
       </form>
       <p className="text-sm mt-4">

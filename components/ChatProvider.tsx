@@ -13,6 +13,8 @@ import { Chat } from "@prisma/client";
 interface ChatContextType {
   currentChat: Chat | undefined;
   setCurrentChat: (chat: Chat) => void;
+  isLoading: boolean;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   systemPrompt: string;
   setSystemPrompt: React.Dispatch<React.SetStateAction<string>>;
   message: string;
@@ -43,6 +45,7 @@ export function ChatProvider({
   children,
 }: ChatProviderProps) {
   const [currentChat, setCurrentChat] = useState<Chat | undefined>(initialChat);
+  const [isLoading, setIsLoading] = useState(false);
   const [systemPrompt, setSystemPrompt] = useState("Be concise");
   const [message, setMessage] = useState("");
   const [chatMessages, setChatMessages] =
@@ -53,6 +56,8 @@ export function ChatProvider({
       value={{
         currentChat,
         setCurrentChat,
+        isLoading,
+        setIsLoading,
         systemPrompt,
         setSystemPrompt,
         message,

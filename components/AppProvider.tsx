@@ -35,11 +35,16 @@ interface AppProviderProps {
 export function AppProvider({ initialChats, children }: AppProviderProps) {
   const pathname = usePathname();
   const [chats, setChats] = useState<Chat[]>(initialChats);
-  const [activeChat, setActiveChat] = useState<Chat | null>(
-    pathname === "/"
-      ? null
-      : initialChats.find((chat) => chat.id === pathname.split("/")[1]) || null
-  );
+  const [activeChat, setActiveChat] = useState<Chat | null>(null);
+
+  useEffect(() => {
+    if (pathname === "/") {
+      setActiveChat(null);
+      return;
+    }
+    const id = pathname.split("/")[1];
+    setActiveChat(chats.find((c) => c.id === id) ?? null);
+  }, [pathname, chats]);
 
   return (
     <AppContext.Provider

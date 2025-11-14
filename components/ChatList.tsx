@@ -6,18 +6,17 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { MoreHorizontalIcon, Trash } from "lucide-react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { useAppContext } from "./AppProvider";
 import { deleteChat } from "@/lib/chat-api";
 
 export function ChatList() {
   const { activeChat, chats, setActiveChat, setChats } = useAppContext();
-
   return (
     <>
       {chats.map((chat) => (
@@ -31,7 +30,7 @@ export function ChatList() {
               <Link
                 href={`/${chat.id}`}
                 onClick={() => setActiveChat(chat)}
-                className="overflow-hidden h-full text-xs"
+                className="overflow-hidden h-full text-xs grow"
               >
                 <span>{chat.title}</span>
               </Link>
@@ -47,6 +46,10 @@ export function ChatList() {
                       onSelect={() =>
                         deleteChat(chat.id).then(() => {
                           setChats(chats.filter((c) => c.id !== chat.id));
+                          if (chat.id === activeChat?.id) {
+                            setActiveChat(null);
+                            redirect("/");
+                          }
                         })
                       }
                     >
