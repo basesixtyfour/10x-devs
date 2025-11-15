@@ -42,12 +42,7 @@ export default async function RootLayout({
             <TitleUpdater />
             <SidebarProvider>
               {session && <AppSidebar />}
-              <main className="flex w-full">
-                {session && (
-                  <SidebarTrigger className="ml-4 mt-5 sticky top-4" />
-                )}
-                {children}
-              </main>
+              <main className="flex w-full">{children}</main>
             </SidebarProvider>
           </AppProvider>
         </ThemeProvider>

@@ -67,6 +67,24 @@ export async function deleteChat(userId: string, chatId: string) {
   return { id: chatId };
 }
 
+export async function updateChatTitle(
+  userId: string,
+  chatId: string,
+  title: string,
+) {
+  const chat = await prisma.chat.update({
+    where: {
+      id: chatId,
+      userId: userId,
+    },
+    data: {
+      title: title,
+    },
+  });
+
+  return chat;
+}
+
 export async function deleteMessage(chatId: string, messageId: string) {
   await prisma.message.delete({
     where: {

@@ -9,11 +9,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontalIcon, Trash } from "lucide-react";
+import { MoreHorizontalIcon, Pencil, Trash } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { useAppContext } from "./AppProvider";
-import { deleteChat } from "@/lib/chat-api";
+import { deleteChat, renameChat } from "@/lib/chat-api";
 
 export function ChatList() {
   const { activeChat, chats, setActiveChat, setChats } = useAppContext();
@@ -42,6 +42,37 @@ export function ChatList() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-40" align="end">
                   <DropdownMenuGroup>
+                    <DropdownMenuItem
+                      onSelect={() => {
+                        const newTitle = window.prompt(
+                          "Enter new chat name",
+                          chat.title ?? ""
+                        );
+                        if (
+                          newTitle &&
+                          newTitle.trim() &&
+                          newTitle !== chat.title
+                        ) {
+                          renameChat(chat.id, newTitle).then((updatedChat) => {
+                            setChats(
+                              chats.map((c) =>
+                                c.id === chat.id
+                                  ? { ...c, title: updatedChat.title }
+                                  : c
+                              )
+                            );
+                            if (chat.id === activeChat?.id) {
+                              setActiveChat({
+                                ...activeChat,
+                                title: updatedChat.title,
+                              });
+                            }
+                          });
+                        }
+                      }}
+                    >
+                      <Pencil /> Rename Chat
+                    </DropdownMenuItem>
                     <DropdownMenuItem
                       onSelect={() =>
                         deleteChat(chat.id).then(() => {

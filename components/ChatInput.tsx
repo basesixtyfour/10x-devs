@@ -4,7 +4,7 @@ import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
-  InputGroupInput,
+  InputGroupTextarea,
 } from "./ui/input-group";
 import { ArrowUpIcon, MessageCircle, Ban } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -60,9 +60,10 @@ export default function ChatInput({ className }: { className?: string }) {
         className
       )}
     >
-      <InputGroupInput
+      <InputGroupTextarea
+        ref={textareaRef}
         id="chat-input-message"
-        className="text-xl md:text-xl"
+        className="text-xl md:text-xl flex items-center"
         placeholder="Ask me anything"
         value={message}
         onChange={(e) => setMessage(e.target.value)}
@@ -73,8 +74,8 @@ export default function ChatInput({ className }: { className?: string }) {
           }
         }}
       />
-      <InputGroupAddon>
-        <MessageCircle />
+      <InputGroupAddon className="p-0">
+        <MessageCircle className="size-6" />
       </InputGroupAddon>
       {isLoading ? (
         <Ban className="animate-spin" onClick={handleCancelMessage} />

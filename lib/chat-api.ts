@@ -20,6 +20,18 @@ export async function sendMessageToChat(chatId: string, message: string, abortSi
   return res.body;
 }
 
+export async function renameChat(chatId: string, title: string) {
+  const res = await fetch(`/api/chat/${chatId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ title }),
+  });
+  if (!res.ok) throw new Error("Failed to rename chat");
+  return res.json();
+}
+
 export async function deleteChat(chatId: string) {
   const res = await fetch(`/api/chat/${chatId}`, {
     method: "DELETE",
