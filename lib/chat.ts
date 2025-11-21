@@ -18,7 +18,7 @@ export function useSendChatMessage() {
   } = useChatContext();
   const { chats, setChats, setActiveChat } = useAppContext();
 
-  const send = async (abortSignal: AbortSignal): Promise<string> => {
+  const send = async (abortSignal: AbortSignal, model?: string): Promise<string> => {
     const content = message.trim();
     if (!content) return "Message must be non-zero";
 
@@ -47,7 +47,7 @@ export function useSendChatMessage() {
     ]);
 
     try {
-      const body = await sendMessageToChat(currentChatId, content, abortSignal);
+      const body = await sendMessageToChat(currentChatId, content, abortSignal, model);
 
       await streamChatResponse(body, (chunk) => {
         if (chunk.event === "user_message_id" && typeof chunk.id === "string") {

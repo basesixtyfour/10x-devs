@@ -4,7 +4,7 @@ import "./globals.css";
 import { AppProvider } from "@/components/AppProvider";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { getChats } from "@/lib/server/chat";
 import { TitleUpdater } from "@/components/TitleUpdater";
 import { AppSidebar } from "@/components/AppSidebar";
@@ -28,6 +28,9 @@ export default async function RootLayout({
     headers: await headers(),
   });
 
+  const cookieStore = await cookies();
+  const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
+
   const userId = session?.user.id;
   const chats = userId ? await getChats(userId, { limit: 10, skip: 0 }) : [];
 
@@ -40,7 +43,7 @@ export default async function RootLayout({
         <ThemeProvider>
           <AppProvider initialChats={chats}>
             <TitleUpdater />
-            <SidebarProvider>
+            <SidebarProvider defaultOpen={defaultOpen}>
               {session && <AppSidebar />}
               <main className="flex w-full">{children}</main>
             </SidebarProvider>

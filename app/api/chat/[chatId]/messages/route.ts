@@ -7,7 +7,7 @@ import {
   getChatMessages,
 } from "@/lib/server/chat";
 import { openai } from "@/lib/server/openai";
-import { MessageSchema, ChatIdSchema } from "@/lib/server/validation";
+import { MessageSchema, ChatIdSchema, DEFAULT_MODEL } from "@/lib/server/validation";
 import { jsonError, sseHeaders } from "@/lib/server/http";
 import { createSSEStream } from "@/lib/server/sse";
 import ratelimit from "@/lib/ratelimit";
@@ -90,7 +90,7 @@ export async function POST(
   }
 
   const userId = session.user.id;
-  const { message } = messageParsed.data;
+  const { message, model } = messageParsed.data;
   const { chatId } = chatIdParsed.data;
   try {
     checkAborted();
@@ -102,10 +102,12 @@ export async function POST(
 
     checkAborted();
 
+    const selectedModel = model || DEFAULT_MODEL;
     const completionStream = await openai.chat.completions.create({
-      model: "google/gemini-2.5-flash-lite",
+      model: selectedModel,
       messages: userMessages,
       stream: true,
+      max_tokens: 1000,
     });
 
     const abortStreamHandler = () => {

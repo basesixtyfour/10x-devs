@@ -10,10 +10,10 @@ export async function createNewChat(systemPrompt: string, message: string) {
   return data;
 }
 
-export async function sendMessageToChat(chatId: string, message: string, abortSignal: AbortSignal) {
+export async function sendMessageToChat(chatId: string, message: string, abortSignal: AbortSignal, model?: string) {
   const res = await fetch(`/api/chat/${chatId}/messages`, {
     method: "POST",
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({ message, model }),
     signal: abortSignal,
   });
   if (!res.ok || !res.body) throw new Error("Failed to send message");
