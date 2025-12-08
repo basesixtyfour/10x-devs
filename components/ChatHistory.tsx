@@ -19,6 +19,14 @@ export default function ChatHistory() {
     scrollToBottom();
   });
 
+  if (chatMessages.length === 0) {
+    return (
+      <div className="text-center text-4xl font-bold flex flex-col items-center justify-center grow text-gray-400">
+        What do you want to build today?
+      </div>
+    );
+  }
+
   return (
     <div
       className="grow md:w-[48rem] md:mx-auto flex flex-col gap-4"
